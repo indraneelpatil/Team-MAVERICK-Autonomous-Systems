@@ -1,0 +1,147 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+
+import RPi.GPIO as GPIO
+import time
+
+import numpy as np
+import matplotlib.image
+import matplotlib.pyplot
+import math
+import os
+
+i=0;
+
+import rospy
+from sensor_msgs.msg import LaserScan
+from geometry_msgs.msg import Twist
+from std_msgs.msg import Float32, Float64, String
+global distance_forward, distance_left, distance_right
+global Kinect_ranges
+global PWMOutput
+
+
+GPIO.setmode(GPIO.BOARD)
+ 
+Motor_rightA = 11
+Motor_rightB = 13
+Motor_rightE = 33
+
+Motor_leftA = 16
+Motor_leftB = 18
+Motor_leftE = 32
+
+
+GPIO.setup(Motor_rightA,GPIO.OUT)
+GPIO.setup(Motor_rightB,GPIO.OUT)
+GPIO.setup(Motor_rightE,GPIO.OUT)
+
+GPIO.setup(Motor_leftA,GPIO.OUT)
+GPIO.setup(Motor_leftB,GPIO.OUT)
+GPIO.setup(Motor_leftE,GPIO.OUT)
+
+pwm1=GPIO.PWM(33, 100)
+pwm2=GPIO.PWM(32,100)
+
+pwm1.start(0)
+pwm2.start(0)
+
+def MoveForward():
+    PWMOutput= 50
+    pwm1.ChangeDutyCycle(PWMOutput)
+    pwm2.ChangeDutyCycle(PWMOutput)
+
+    GPIO.output(Motor_rightA,GPIO.HIGH)
+    GPIO.output(Motor_rightB,GPIO.LOW)
+ 
+    GPIO.output(Motor_leftA,GPIO.HIGH)
+    GPIO.output(Motor_leftB,GPIO.LOW)
+    
+    time.sleep(0.1)
+   
+def MoveBack():
+    PWMOutput= 50
+    pwm1.ChangeDutyCycle(PWMOutput)
+    pwm2.ChangeDutyCycle(PWMOutput)
+
+    GPIO.output(Motor_rightA,GPIO.LOW)
+    GPIO.output(Motor_rightB,GPIO.HIGH)
+ 
+    GPIO.output(Motor_leftA,GPIO.LOW)
+    GPIO.output(Motor_leftB,GPIO.HIGH)
+    
+    time.sleep(0.1)
+
+def MoveLeft():
+    GPIO.output(Motor_rightA,GPIO.HIGH)
+    GPIO.output(Motor_rightB,GPIO.LOW)
+    
+    
+    GPIO.output(Motor_leftA,GPIO.LOW)
+    GPIO.output(Motor_leftB,GPIO.HIGH)
+    
+    pwm1.ChangeDutyCycle(100)
+    pwm2.ChangeDutyCycle(100)
+    time.sleep(0.1)
+    
+    MoveForward()
+    
+
+def MoveRight():
+    GPIO.output(Motor_rightA,GPIO.LOW)
+    GPIO.output(Motor_rightB,GPIO.HIGH)
+    
+
+    GPIO.output(Motor_leftA,GPIO.HIGH)
+    GPIO.output(Motor_leftB,GPIO.LOW)
+    
+    pwm1.ChangeDutyCycle(100)
+    pwm2.ChangeDutyCycle(100)
+    time.sleep(0.1)
+    MoveForward()
+
+
+
+def callback(msg):
+    
+    lin_X= msg.linear.x
+    lin_Y= msg.linear.y
+    lin_Z= msg.linear.z
+    
+    ang_X =msg.angular.x
+    ang_Y =msg.angular.y
+    ang_Z =msg.angular.z
+    
+    if lin_X==0 and lin_Y==0 and lin_Z==0 and ang_X==0 and ang_Y==0 and ang_Z==$
+        PWMOutput = 0
+        pwm1.ChangeDutyCycle(PWMOutput)
+        pwm2.ChangeDutyCycle(PWMOutput)
+    
+    elif lin_X>0 :
+        MoveForward()
+    elif ang_Z>0 and lin_X==0 :
+        MoveLeft()
+    elif ang_Z<0 and lin_X==0 :
+        MoveRight()
+    elif lin_X<0 :
+          MoveBack()    
+    rate.sleep()    
+
+def listener():
+
+    rospy.init_node('teleop_control', anonymous=True)
+    rate=rospy.Rate(10)
+    rospy.Subscriber("/cmd_vel", Twist, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    rospy.init_node('teleop_control', anonymous=True)
+    rate=rospy.Rate(10)
+    listener()
+
+
+
+
+
+
+
