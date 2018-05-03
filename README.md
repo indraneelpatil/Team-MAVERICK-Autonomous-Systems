@@ -6,3 +6,8 @@ A dynamic platform for continuous research in autonomous ground vehicles based o
   
 </p>
 
+<p align="center">
+  <img src="Screenshot from 2018-05-03 23:47:22.png" width="1000"/>
+  
+</p>
+
