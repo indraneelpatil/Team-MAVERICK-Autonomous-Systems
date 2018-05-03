@@ -1,0 +1,167 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+
+import RPi.GPIO as GPIO
+import time
+
+import numpy as np
+import matplotlib.image
+import matplotlib.pyplot
+import math
+import os
+
+i=0;
+GPIO.cleanup()
+
+global distance_forward, distance_left, distance_right
+
+distance_left=100
+distance_forward=100
+distance_right=100
+
+import rospy
+from sensor_msgs.msg import LaserScan
+from std_msgs.msg import Float32, Float64, String
+
+global Kinect_ranges
+Kinect_ranges=np.zeros(640)
+global PWMOutput
+
+GPIO.setmode(GPIO.BOARD)
+ 
+Motor_rightA = 11
+Motor_rightB = 13
+Motor_rightE = 33
+
+Motor_leftA = 16
+Motor_leftB = 18
+Motor_leftE = 32
+
+
+GPIO.setup(Motor_rightA,GPIO.OUT)
+GPIO.setup(Motor_rightB,GPIO.OUT)
+GPIO.setup(Motor_rightE,GPIO.OUT)
+
+GPIO.setup(Motor_leftA,GPIO.OUT)
+GPIO.setup(Motor_leftB,GPIO.OUT)
+GPIO.setup(Motor_leftE,GPIO.OUT)
+
+pwm1=GPIO.PWM(33, 100)
+pwm2=GPIO.PWM(32,100)
+
+pwm1.start(0)
+pwm2.start(0)
+
+def MoveForward():
+    PWMOutput= 50
+    pwm1.ChangeDutyCycle(PWMOutput)
+    pwm2.ChangeDutyCycle(PWMOutput)
+
+    GPIO.output(Motor_rightA,GPIO.HIGH)
+    GPIO.output(Motor_rightB,GPIO.LOW)
+ 
+    GPIO.output(Motor_leftA,GPIO.HIGH)
+    GPIO.output(Motor_leftB,GPIO.LOW)
+    
+    time.sleep(0.1)
+   
+    
+def MoveLeft():
+    GPIO.output(Motor_rightA,GPIO.HIGH)
+    GPIO.output(Motor_rightB,GPIO.LOW)
+    
+    
+    GPIO.output(Motor_leftA,GPIO.LOW)
+    GPIO.output(Motor_leftB,GPIO.HIGH)
+    
+    pwm1.ChangeDutyCycle(70)
+    pwm2.ChangeDutyCycle(70)
+    time.sleep(0.1)
+    
+    MoveForward()
+    
+
+def MoveRight():
+    GPIO.output(Motor_rightA,GPIO.LOW)
+    GPIO.output(Motor_rightB,GPIO.HIGH)
+    
+
+    GPIO.output(Motor_leftA,GPIO.HIGH)
+    GPIO.output(Motor_leftB,GPIO.LOW)
+    
+    pwm1.ChangeDutyCycle(70)
+    pwm2.ChangeDutyCycle(70)
+    time.sleep(0.1)
+    
+    MoveForward()
+    
+def callback1(msg):
+    global Kinect_ranges
+    Kinect_ranges = msg.ranges
+    
+
+def callback2(data):
+    global distance_forward
+    distance_forward=data.data
+    if distance_left < 20.0:
+            PWMOutput = 0
+            pwm1.ChangeDutyCycle(PWMOutput)
+            pwm2.ChangeDutyCycle(PWMOutput)
+
+def callback3(data):
+    global distance_left
+    distance_left=data.data
+    if distance_left < 13.0:
+            MoveRight()
+    
+def callback4(data):
+    global distance_right
+    distance_right=data.data
+    if distance_right < 13.0:
+            MoveLeft()
+            
+ def listener():
+    rospy.init_node('Obstacle_Avoidance', anonymous=True)
+    rate=rospy.Rate(10)
+    
+    rospy.Subscriber("/depth_scan", LaserScan, callback1)
+    rospy.Subscriber("/distance_forward", Float32 , callback2)
+    rospy.Subscriber("/distance_left", Float32, callback3)
+    rospy.Subscriber("/distance_right", Float32, callback4)
+        
+    
+    
+    
+if __name__ == '__main__':
+    rospy.init_node('Obstacle_Avoidance', anonymous=True)
+    rate=rospy.Rate(10)
+    #GPIO.cleanup()
+    hello_str = "Obstacle Avoidance Node Started %s" % rospy.get_time()
+    rospy.loginfo(hello_str)
+
+    MoveForward()
+    #global Kinect_ranges
+    while not rospy.is_shutdown():
+        listener()
+        for i in range(210,420):
+            if (Kinect_ranges[i]<1) and (Kinect_ranges[i]>0):
+                hello_str = "Kinect_stop" 
+                rospy.loginfo(hello_str)
+
+                PWMOutput = 0
+                pwm1.ChangeDutyCycle(PWMOutput)
+                pwm2.ChangeDutyCycle(PWMOutput)
+                break
+            else:
+                MoveForward()
+
+        rate.sleep()
+
+
+
+
+
+
+
+
+
