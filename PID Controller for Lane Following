@@ -1,0 +1,217 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+
+import RPi.GPIO as GPIO
+from time import sleep
+
+import rospy
+from sensor_msgs.msg import Image, CompressedImage
+from std_msgs.msg import Float64, String
+from std_srvs.srv import Empty, EmptyResponse
+from cv_bridge import CvBridge, CvBridgeError
+import cv2
+
+import os
+
+global desired_slope,Error,PWMOutput,integral,derivative,Kp,Ki,Kd,Motor1A,Motor$
+desired_slope=0
+
+ErrorP=0    
+PWMOutput = 0
+integral = 0
+derivative = 0
+
+Kp = 3
+Ki = 0.5; 
+Kd = 1.8; 
+
+GPIO.setmode(GPIO.BOARD)
+ 
+Motor1A = 16
+Motor1B = 18
+Motor1E = 22
+
+Motor2A = 23
+Motor2B = 21
+Motor2E = 19
+
+
+GPIO.setup(Motor1A,GPIO.OUT)
+GPIO.setup(Motor1B,GPIO.OUT)
+GPIO.setup(Motor1E,GPIO.OUT)
+
+GPIO.setup(Motor2A,GPIO.OUT)
+GPIO.setup(Motor2B,GPIO.OUT)
+GPIO.setup(Motor2E,GPIO.OUT)
+
+pwm1=GPIO.PWM(22, 100)
+pwm2=GPIO.PWM(19,100)
+
+pwm1.start(0)
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+
+import RPi.GPIO as GPIO
+from time import sleep
+
+import rospy
+from sensor_msgs.msg import Image, CompressedImage
+from std_msgs.msg import Float64, String
+from std_srvs.srv import Empty, EmptyResponse
+from cv_bridge import CvBridge, CvBridgeError
+import cv2
+
+import os
+
+global desired_slope,Error,PWMOutput,integral,derivative,Kp,Ki,Kd,Motor1A,Motor$
+desired_slope=0
+
+ErrorP=0    
+PWMOutput = 0
+integral = 0
+derivative = 0
+
+Kp = 3
+Ki = 0.5; 
+Kd = 1.8; 
+
+GPIO.setmode(GPIO.BOARD)
+ 
+Motor1A = 16
+Motor1B = 18
+Motor1E = 22
+
+Motor2A = 23
+Motor2B = 21
+Motor2E = 19
+
+
+GPIO.setup(Motor1A,GPIO.OUT)
+GPIO.setup(Motor1B,GPIO.OUT)
+GPIO.setup(Motor1E,GPIO.OUT)
+
+GPIO.setup(Motor2A,GPIO.OUT)
+GPIO.setup(Motor2B,GPIO.OUT)
+GPIO.setup(Motor2E,GPIO.OUT)
+
+pwm1=GPIO.PWM(22, 100)
+pwm2=GPIO.PWM(19,100)
+
+pwm1.start(0)
+pwm2.start(0)
+
+def callback(data):
+    global integral,Error,ErrorP,derivative,Kp,Ki,Kd,PWMOutput
+   
+    
+    current_slope=data.data
+    Error=current_slope
+    #print(integral,Error)
+    integral=integral+Error
+    derivative=Error-ErrorP
+    ErrorP=Error
+    
+    PWMOutput = (Kp * Error) + (Ki * integral) + (Kd * derivative);
+    PWMOutput =0.5*abs(PWMOutput); 
+    
+    if PWMOutput > 100:
+        PWMOutput = 100;
+  
+    elif PWMOutput < 0:
+  
+        PWMOutput = 0;
+    
+
+  
+    if Error > 35.00 :     
+        MoveRight();
+  
+    elif Error < -35.00 :
+        MoveLeft();
+  
+    elif Error >-35.00 and Error < 35.00 :
+        MoveStraight();
+
+    pwm1.ChangeDutyCycle(PWMOutput)
+    pwm2.ChangeDutyCycle(PWMOutput)
+    print(PWMOutput)
+    #GPIO.cleanup()
+    #sleep(1)
+    rate.sleep()
+
+  
+def MoveStraight():
+    
+    GPIO.setup(Motor1A,GPIO.OUT)
+    GPIO.setup(Motor1B,GPIO.OUT)
+    GPIO.setup(Motor1E,GPIO.OUT)
+
+    GPIO.setup(Motor2A,GPIO.OUT)
+    GPIO.setup(Motor2B,GPIO.OUT)
+    GPIO.setup(Motor2E,GPIO.OUT)
+    
+    GPIO.setmode(GPIO.BOARD)
+ 
+    GPIO.output(Motor1A,GPIO.HIGH)
+    GPIO.output(Motor1B,GPIO.LOW)
+ 
+    GPIO.output(Motor2A,GPIO.HIGH)
+    GPIO.output(Motor2B,GPIO.LOW)
+   
+    
+def MoveLeft():
+    GPIO.setup(Motor1A,GPIO.OUT)
+    GPIO.setup(Motor1B,GPIO.OUT)
+    GPIO.setup(Motor1E,GPIO.OUT)
+
+    GPIO.setup(Motor2A,GPIO.OUT)
+    GPIO.setup(Motor2B,GPIO.OUT)
+    GPIO.setup(Motor2E,GPIO.OUT)
+    
+     GPIO.setmode(GPIO.BOARD)
+
+    GPIO.output(Motor1A,GPIO.HIGH)
+    GPIO.output(Motor1B,GPIO.LOW)
+    
+
+    GPIO.output(Motor2A,GPIO.LOW)
+    GPIO.output(Motor2B,GPIO.HIGH)
+    
+
+def MoveRight():
+    global Motor1A,Motor1B,Motor1E,Motor2B,Motor2B,Motor2E
+    GPIO.setup(Motor1A,GPIO.OUT)
+    GPIO.setup(Motor1B,GPIO.OUT)
+    GPIO.setup(Motor1E,GPIO.OUT)
+
+    GPIO.setup(Motor2A,GPIO.OUT)
+    GPIO.setup(Motor2B,GPIO.OUT)
+    GPIO.setup(Motor2E,GPIO.OUT)
+ 
+
+    GPIO.setmode(GPIO.BOARD)
+
+    GPIO.output(Motor1A,GPIO.LOW)
+    GPIO.output(Motor1B,GPIO.HIGH)
+    
+
+    GPIO.output(Motor2A,GPIO.HIGH)
+    GPIO.output(Motor2B,GPIO.LOW)
+def listener():
+    rospy.init_node('motor_controller', anonymous=True)
+    rate=rospy.Rate(1)    
+    rospy.Subscriber("/slope_topic", Float64 , callback)
+    hello_str = "Motor Controller Node Started %s" % rospy.get_time()
+    rospy.loginfo(hello_str)
+    rospy.spin()
+    
+    
+    
+if __name__ == '__main__':
+    rospy.init_node('motor_controller', anonymous=True)
+    rate=rospy.Rate(1)
+    #GPIO.cleanup()
+
+    listener()
+
+
