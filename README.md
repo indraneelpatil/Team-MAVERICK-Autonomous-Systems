@@ -7,7 +7,8 @@ A dynamic platform for continuous research in autonomous ground vehicles based o
 </p>
 
 <p align="center">
-  <img src="ROS-diagram.jpg" width="800"/>
+  <img src="ROS-diagram.jpg" width="600"/>
   
 </p>
+
 
